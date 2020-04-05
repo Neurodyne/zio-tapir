@@ -15,8 +15,8 @@ object LayerEndpoint {
     val live: ZLayer[Console, Nothing, Has[Service]] = ZLayer.fromFunction { console: Console =>
       new Service {
         def hello(id: Int): ZIO[Any, String, Pet] = {
-          console.get.putStrLn("Hello")
-          ZIO.succeed(Pet(id.toString, ""))
+          console.get.putStrLn(s"Got Pet request for $id")
+          ZIO.succeed(Pet(id.toString, "https://zio.dev"))
         }
       }
     }

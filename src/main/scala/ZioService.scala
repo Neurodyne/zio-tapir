@@ -46,7 +46,7 @@ object ZioService extends App {
     } else {
       IO.fail("Unknown pet id")
     }
-  } <+> zioEndpoint.toZioRoutes(id => UserService.hello(id))
+  } <+> zioEndpoint.toZioRoutes(id => UserService.hello(id).provideLayer(LayerEndpoint.liveEnv))
 
   // Or, using server logic:
 
