@@ -12,13 +12,15 @@ import sttp.tapir.server.ServerEndpoint
 import sttp.tapir.server.http4s._
 import sttp.tapir.swagger.http4s.SwaggerHttp4s
 import cats.implicits._
+import sttp.tapir.examples.LayerEndpoint.UserService
 
-object ServZio extends App {
+object ZioService extends App {
   // extension methods for ZIO; not a strict requirement, but they make working with ZIO much nicer
   implicit class ZioEndpoint[I, E, O](e: Endpoint[I, E, O, EntityBody[Task]]) {
     def toZioRoutes(logic: I => IO[E, O])(implicit serverOptions: Http4sServerOptions[Task]): HttpRoutes[Task] = {
       import sttp.tapir.server.http4s._
       e.toRoutes(i => logic(i).either)
+
     }
 
     def zioServerLogic(logic: I => IO[E, O]): ServerEndpoint[I, E, O, EntityBody[Task], Task] =
@@ -35,13 +37,16 @@ object ServZio extends App {
   val petEndpoint: Endpoint[Int, String, Pet, Nothing] =
     endpoint.get.in("pet" / path[Int]("petId")).errorOut(stringBody).out(jsonBody[Pet])
 
+  val zioEndpoint: Endpoint[Int, String, Pet, Nothing] =
+    endpoint.get.in("zio" / path[Int]("petId")).errorOut(stringBody).out(jsonBody[Pet])
+
   val service: HttpRoutes[Task] = petEndpoint.toZioRoutes { petId =>
     if (petId == 35) {
       UIO(Pet("Tapirus terrestris", "https://en.wikipedia.org/wiki/Tapir"))
     } else {
       IO.fail("Unknown pet id")
     }
-  }
+  } <+> zioEndpoint.toZioRoutes(id => UserService.hello(id))
 
   // Or, using server logic:
 
